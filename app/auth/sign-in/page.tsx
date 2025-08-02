@@ -1,41 +1,81 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+
 export default function SignInPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg('');
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMsg(error.message);
+    } else {
+      const user = data.user;
+      const role = user?.user_metadata?.role;
+
+      if (role === 'writer') {
+        router.push('/dashboard/writer');
+      } else if (role === 'producer') {
+        router.push('/dashboard/producer');
+      } else {
+        router.push('/'); // bilinmeyen rol
+      }
+    }
+
+    setLoading(false);
+  };
+
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Giriş Yap</h1>
-      <form className="space-y-4">
+    <div className="max-w-md mx-auto py-12 space-y-6">
+      <h1 className="text-2xl font-bold text-center">🔐 Giriş Yap</h1>
+      <form className="space-y-4" onSubmit={handleSignIn}>
         <div>
-          <label className="block font-semibold mb-1">E-posta</label>
+          <label className="block text-sm font-medium">Email</label>
           <input
             type="email"
-            className="w-full p-3 border rounded-lg"
-            placeholder="ornek@eposta.com"
+            className="w-full p-2 border rounded-lg"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
 
         <div>
-          <label className="block font-semibold mb-1">Şifre</label>
+          <label className="block text-sm font-medium">Şifre</label>
           <input
             type="password"
-            className="w-full p-3 border rounded-lg"
-            placeholder="••••••••"
+            className="w-full p-2 border rounded-lg"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
           />
         </div>
 
-        <button type="submit" className="btn btn-primary w-full">
-          Giriş Yap
+        {errorMsg && <p className="text-red-600 text-sm">{errorMsg}</p>}
+
+        <button
+          type="submit"
+          className="btn btn-primary w-full"
+          disabled={loading}
+        >
+          {loading ? 'Giriş Yapılıyor...' : 'Giriş Yap'}
         </button>
       </form>
-
-      <div className="text-right text-sm">
-        <a
-          href="/auth/reset-password"
-          className="text-[#0e5b4a] hover:underline"
-        >
-          Şifremi unuttum
-        </a>
-      </div>
     </div>
   );
 }

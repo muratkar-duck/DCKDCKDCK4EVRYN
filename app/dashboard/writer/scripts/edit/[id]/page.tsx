@@ -1,62 +1,71 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function NewScriptPage() {
+export default function EditScriptPage() {
   const router = useRouter();
+  const { id } = useParams();
+  const [loading, setLoading] = useState(true);
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
   const [duration, setDuration] = useState('');
   const [description, setDescription] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    if (id) fetchScript();
+  }, [id]);
 
-      if (!user) {
-        router.push('/auth/sign-in');
-        return;
-      }
+  const fetchScript = async () => {
+    const { data, error } = await supabase
+      .from('scripts')
+      .select('*')
+      .eq('id', id)
+      .single();
 
-      setUserId(user.id);
-    };
+    if (error) {
+      alert('Veri alınamadı: ' + error.message);
+    } else if (data) {
+      setTitle(data.title);
+      setGenre(data.genre);
+      setDuration(data.duration);
+      setDescription(data.description);
+    }
 
-    getUser();
-  }, [router]);
+    setLoading(false);
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userId) return;
-
-    const { error } = await supabase.from('scripts').insert([
-      {
+    const { error } = await supabase
+      .from('scripts')
+      .update({
         title,
         genre,
         duration,
         description,
-        user_id: userId,
-      },
-    ]);
+      })
+      .eq('id', id);
 
     if (error) {
-      alert('Senaryo kaydedilirken hata oluştu: ' + error.message);
+      alert('Güncelleme başarısız: ' + error.message);
     } else {
       router.push('/dashboard/writer/scripts');
     }
   };
 
+  if (loading) {
+    return <p className="text-sm text-gray-500">Yükleniyor...</p>;
+  }
+
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">✍️ Yeni Senaryo Ekle</h1>
+      <h1 className="text-2xl font-bold">✏️ Senaryo Düzenle</h1>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
+      <form className="space-y-4" onSubmit={handleUpdate}>
         <div>
           <label className="block text-sm font-medium mb-1">Başlık</label>
           <input
@@ -114,9 +123,18 @@ export default function NewScriptPage() {
           ></textarea>
         </div>
 
-        <button type="submit" className="btn btn-primary">
-          Kaydet
-        </button>
+        <div className="flex gap-4">
+          <button type="submit" className="btn btn-primary">
+            Kaydet
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => router.back()}
+          >
+            Vazgeç
+          </button>
+        </div>
       </form>
     </div>
   );

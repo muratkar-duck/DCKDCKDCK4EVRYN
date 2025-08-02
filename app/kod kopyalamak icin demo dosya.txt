@@ -1,67 +1,57 @@
-'use client';
-
-import { Typewriter } from 'react-simple-typewriter';
-
-export default function HomePage() {
+export default function SignUpWriterPage() {
   return (
-    <div className="space-y-12">
-      {/* Hero */}
-      <section className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Senaryonuz Dünyaya Ulaşsın</h1>
-        <p className="text-lg max-w-2xl mx-auto font-sans text-[#7a5c36]">
-          <Typewriter
-            words={[
-              'ducktylo, senaristlerle yapımcıları bir araya getiren yenilikçi bir platformdur.',
-              'Burada senaryonuz doğru kişilere ulaşır ve projeleriniz hayat bulur.',
-              'ducktylo, senaryonuzun güvenli bir şekilde depolanmasını sağlar.',
-              'senarist-ducktylo-yapımcı.',
-              'burayı istediğimiz kadar uzatabiliyor muyuz acaba?',
-              'bursada dehşet',
-            ]}
-            loop={true}
-            typeSpeed={60}
-            deleteSpeed={20}
-            delaySpeed={600}
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">Senarist Olarak Kayıt Ol</h1>
+      <form className="space-y-4">
+        <div>
+          <label className="block font-semibold mb-1">E-posta</label>
+          <input
+            type="email"
+            className="w-full p-3 border rounded-lg"
+            placeholder="ornek@eposta.com"
+            required
           />
-          <span className="blinking-cursor">|</span>
-        </p>
-
-        <div className="mt-8 flex justify-center gap-4 flex-wrap">
-          <a href="/auth/sign-up-writer" className="btn btn-primary">
-            Senarist Olarak Katıl
-          </a>
-          <a href="/auth/sign-up-producer" className="btn btn-secondary">
-            Yapımcı Olarak Katıl
-          </a>
-          <a href="/auth/sign-in" className="btn btn-warning">
-            Giriş Yap
-          </a>
         </div>
-      </section>
-
-      {/* Özellik Kartları */}
-      <section>
-        <h2 className="text-2xl font-semibold mb-6 text-center">
-          🚀 Özellikler
-        </h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-2">Senaryo Yükleme</h3>
-            <p>
-              Senaryolarınızı yükleyin, fiyatlandırın, yayınlayın. Her şey
-              kontrolünüzde.
-            </p>
-          </div>
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-2">Yapımcı Filtrelemesi</h3>
-            <p>Yapımcılar tür, süre ve bütçeye göre senaryolara ulaşır.</p>
-          </div>
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-2">Güvenli Ödeme</h3>
-            <p>Komisyon sistemiyle korunan adil ödeme altyapısı.</p>
-          </div>
+        <div>
+          <label className="block font-semibold mb-1">Şifre</label>
+          <input
+            type="password"
+            className="w-full p-3 border rounded-lg"
+            placeholder="••••••••"
+            required
+          />
         </div>
-      </section>
+        <div>
+          <label className="block font-semibold mb-1">Ad Soyad</label>
+          <input
+            type="text"
+            className="w-full p-3 border rounded-lg"
+            placeholder="Adınız Soyadınız"
+            required
+          />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1">Biyografi</label>
+          <textarea
+            className="w-full p-3 border rounded-lg"
+            rows={3}
+            placeholder="Kendinizden bahsedin"
+          ></textarea>
+        </div>
+        <div>
+          <label className="block font-semibold mb-1">
+            Portfolyo (isteğe bağlı)
+          </label>
+          <input
+            type="url"
+            className="w-full p-3 border rounded-lg"
+            placeholder="https://..."
+          />
+        </div>
+        <button type="submit" className="btn btn-primary w-full">
+          Kayıt Ol
+        </button>
+      </form>
     </div>
   );
 }

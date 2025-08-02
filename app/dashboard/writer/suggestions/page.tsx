@@ -1,5 +1,5 @@
 'use client';
-
+import AuthGuard from '@/components/AuthGuard';
 import { sentSuggestions } from '@/lib/mock/sentSuggestions';
 import Link from 'next/link';
 
@@ -25,38 +25,40 @@ export default function WriterSuggestionHistoryPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">📤 Gönderdiğim Öneriler</h1>
-      <p className="text-[#7a5c36]">
-        Yapımcılara gönderdiğin önerileri ve durumlarını aşağıda görebilirsin.
-      </p>
+    <AuthGuard>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">📤 Gönderdiğim Öneriler</h1>
+        <p className="text-[#7a5c36]">
+          Yapımcılara gönderdiğin önerileri ve durumlarını aşağıda görebilirsin.
+        </p>
 
-      {sentSuggestions.map((s) => (
-        <div className="card" key={s.id}>
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h2 className="text-lg font-semibold">{s.scriptTitle}</h2>
-              <p className="text-sm text-[#7a5c36]">
-                İlan: <strong>{s.targetProject}</strong> <br />
-                Yapımcı: {s.producer}
-              </p>
+        {sentSuggestions.map((s) => (
+          <div className="card" key={s.id}>
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h2 className="text-lg font-semibold">{s.scriptTitle}</h2>
+                <p className="text-sm text-[#7a5c36]">
+                  İlan: <strong>{s.targetProject}</strong> <br />
+                  Yapımcı: {s.producer}
+                </p>
+              </div>
+              <div className="text-right space-y-1">
+                <span className="block text-xs text-[#a38d6d]">{s.date}</span>
+                {getBadge(s.status)}
+              </div>
             </div>
-            <div className="text-right space-y-1">
-              <span className="block text-xs text-[#a38d6d]">{s.date}</span>
-              {getBadge(s.status)}
+
+            <div className="flex gap-3 pt-3">
+              <Link
+                href={`/dashboard/writer/requests/${slugify(s.targetProject)}`}
+              >
+                <span className="btn btn-secondary">İlana Git</span>
+              </Link>
             </div>
           </div>
-
-          <div className="flex gap-3 pt-3">
-            <Link
-              href={`/dashboard/writer/requests/${slugify(s.targetProject)}`}
-            >
-              <span className="btn btn-secondary">İlana Git</span>
-            </Link>
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </AuthGuard>
   );
 }
 

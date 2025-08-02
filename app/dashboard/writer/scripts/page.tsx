@@ -1,47 +1,98 @@
-export default function WriterScriptsPage() {
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+
+type Script = {
+  id: string;
+  title: string;
+  genre: string;
+  duration: string;
+  description: string;
+};
+
+export default function MyScriptsPage() {
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchScripts();
+  }, []);
+
+  const fetchScripts = async () => {
+    const { data, error } = await supabase.from('scripts').select('*');
+    if (error) {
+      console.error('Veri alınamadı:', error.message);
+    } else {
+      setScripts(data);
+    }
+    setLoading(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    const confirmed = confirm(
+      'Bu senaryoyu silmek istediğinizden emin misiniz?'
+    );
+    if (!confirmed) return;
+
+    const { error } = await supabase.from('scripts').delete().eq('id', id);
+    if (error) {
+      alert('Silme başarısız: ' + error.message);
+    } else {
+      setScripts((prev) => prev.filter((s) => s.id !== id));
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Senaryolarım</h1>
-        <a href="/dashboard/writer/scripts/new" className="btn btn-primary">
-          + Yeni Senaryo Ekle
-        </a>
-      </div>
+      <h1 className="text-2xl font-bold">📚 Senaryolarım</h1>
+      <p className="text-[#7a5c36]">
+        Daha önce eklediğiniz senaryolar aşağıda listelenmiştir.
+      </p>
 
-      {/* Senaryo Listesi */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Örnek Kart 1 */}
-        <div className="card space-y-2">
-          <h2 className="text-lg font-semibold">Karanlık Geçmiş</h2>
-          <p className="text-sm text-[#7a5c36]">Tür: Suç / Dram</p>
-          <p className="text-sm text-[#7a5c36]">
-            Durum: <span className="font-semibold text-green-600">Yayında</span>
-          </p>
-          <p className="text-xs text-[#a38d6d]">Yayın tarihi: 12 Temmuz 2025</p>
+      {loading ? (
+        <p className="text-sm text-gray-500">Yükleniyor...</p>
+      ) : scripts.length === 0 ? (
+        <p className="text-sm text-gray-500">Henüz senaryo eklenmemiş.</p>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-6">
+          {scripts.map((s) => (
+            <div key={s.id} className="card space-y-2">
+              <h2 className="text-lg font-semibold">{s.title}</h2>
+              <p className="text-sm text-[#7a5c36]">
+                Tür: {s.genre} &middot; Süre: {s.duration}
+              </p>
+              <p className="text-sm text-[#4a3d2f]">{s.description}</p>
+              <div className="flex gap-2 mt-2">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    router.push(`/dashboard/writer/scripts/${s.id}`)
+                  }
+                >
+                  Detay
+                </button>
+                <button
+                  className="btn btn-warning"
+                  onClick={() =>
+                    router.push(`/dashboard/writer/scripts/edit/${s.id}`)
+                  }
+                >
+                  Düzenle
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleDelete(s.id)}
+                >
+                  Sil
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-
-        {/* Örnek Kart 2 */}
-        <div className="card space-y-2">
-          <h2 className="text-lg font-semibold">Kayıp Günlükler</h2>
-          <p className="text-sm text-[#7a5c36]">Tür: Gizem</p>
-          <p className="text-sm text-[#7a5c36]">
-            Durum:{' '}
-            <span className="font-semibold text-yellow-600">İncelemede</span>
-          </p>
-          <p className="text-xs text-[#a38d6d]">Yükleme: 8 Temmuz 2025</p>
-        </div>
-
-        {/* Örnek Kart 3 */}
-        <div className="card space-y-2">
-          <h2 className="text-lg font-semibold">Zamansız</h2>
-          <p className="text-sm text-[#7a5c36]">Tür: Bilim Kurgu</p>
-          <p className="text-sm text-[#7a5c36]">
-            Durum:{' '}
-            <span className="font-semibold text-red-600">Reddedildi</span>
-          </p>
-          <p className="text-xs text-[#a38d6d]">Yükleme: 1 Temmuz 2025</p>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

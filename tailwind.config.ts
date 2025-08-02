@@ -8,7 +8,7 @@ const config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['"Montserrat"', 'Courier', 'monospace'],
+        sans: ['"IBM Plex Mono"', 'Courier', 'monospace'],
       },
     },
   },

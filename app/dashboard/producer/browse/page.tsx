@@ -1,8 +1,35 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 
+type Script = {
+  id: string;
+  title: string;
+  genre: string;
+  duration: string;
+  description: string;
+};
+
 export default function BrowseScriptsPage() {
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchScripts();
+  }, []);
+
+  const fetchScripts = async () => {
+    const { data, error } = await supabase.from('scripts').select('*');
+    if (error) {
+      console.error('Veri alınamadı:', error.message);
+    } else {
+      setScripts(data);
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">🔍 Senaryo Ara</h1>
@@ -34,51 +61,32 @@ export default function BrowseScriptsPage() {
       </div>
 
       {/* Senaryo Kartları */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Kart 1 - Kırık Saat */}
-        <div className="card space-y-2">
-          <h2 className="text-lg font-semibold">Kırık Saat</h2>
-          <p className="text-sm text-[#7a5c36]">Tür: Dram / Gizem</p>
-          <p className="text-sm text-[#7a5c36]">
-            Senarist: <strong>elif_arslan</strong>
-          </p>
-          <p className="text-sm text-[#4a3d2f]">
-            Zamanda sıkışmış bir kadının geçmişle hesaplaşmasını konu alan
-            etkileyici bir kısa film.
-          </p>
-          <div className="flex gap-2 mt-2">
-            <button className="btn btn-primary">İlgilen</button>
-            <Link
-              href="/dashboard/producer/browse/kirik-saat"
-              className="btn btn-secondary"
-            >
-              Detaylar
-            </Link>
-          </div>
+      {loading ? (
+        <p className="text-sm text-gray-500">Yükleniyor...</p>
+      ) : scripts.length === 0 ? (
+        <p className="text-sm text-gray-500">Henüz senaryo bulunamadı.</p>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {scripts.map((s) => (
+            <div className="card space-y-2" key={s.id}>
+              <h2 className="text-lg font-semibold">{s.title}</h2>
+              <p className="text-sm text-[#7a5c36]">
+                Tür: {s.genre} &middot; Süre: {s.duration}
+              </p>
+              <p className="text-sm text-[#4a3d2f]">{s.description}</p>
+              <div className="flex gap-2 mt-2">
+                <button className="btn btn-primary">İlgilen</button>
+                <Link
+                  href={`/dashboard/producer/browse/${s.id}`}
+                  className="btn btn-secondary"
+                >
+                  Detaylar
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
-
-        {/* Kart 2 - Gölge Oyunu */}
-        <div className="card space-y-2">
-          <h2 className="text-lg font-semibold">Gölge Oyunu</h2>
-          <p className="text-sm text-[#7a5c36]">Tür: Aksiyon / Gerilim</p>
-          <p className="text-sm text-[#7a5c36]">
-            Senarist: <strong>senaryo55</strong>
-          </p>
-          <p className="text-sm text-[#4a3d2f]">
-            Eski bir ajan, İstanbul’un yeraltı dünyasında kaybolan kardeşini
-            bulmak zorunda.
-          </p>
-          <div className="flex gap-2 mt-2">
-            <button className="btn btn-primary">İlgilen</button>
-            <Link
-              href="/dashboard/producer/browse/golge-oyunu"
-              className="btn btn-secondary"
-            >
-              Detaylar
-            </Link>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

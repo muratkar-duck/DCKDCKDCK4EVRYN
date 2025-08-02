@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { AuthGuard } from '@/components/AuthGuard';
+import AuthGuard from '@/components/AuthGuard';
 import { requestSuggestions } from '@/lib/mock/requestSuggestions';
 
 export default function ProducerRequestDetailPage() {

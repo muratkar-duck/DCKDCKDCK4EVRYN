@@ -46,8 +46,15 @@ export default function NewScriptPage() {
     ]);
 
     if (error) {
-      alert('Senaryo kaydedilirken hata oluştu: ' + error.message);
+      alert('❌ Senaryo kaydedilirken hata oluştu: ' + error.message);
     } else {
+      alert('✅ Senaryo başarıyla kaydedildi!');
+      // Formu temizle
+      setTitle('');
+      setGenre('');
+      setDuration('');
+      setDescription('');
+      // Listeye yönlendir
       router.push('/dashboard/writer/scripts');
     }
   };
@@ -114,7 +121,10 @@ export default function NewScriptPage() {
           ></textarea>
         </div>
 
-        <button type="submit" className="btn btn-primary">
+        <button
+          type="submit"
+          className="px-4 py-2 bg-[#ffaa06] text-white rounded-lg hover:bg-[#e69900] transition"
+        >
           Kaydet
         </button>
       </form>

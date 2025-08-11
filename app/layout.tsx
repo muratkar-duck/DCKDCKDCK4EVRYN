@@ -1,6 +1,7 @@
 import './globals.css';
 import TabTitleHandler from '../components/TabTitleHandler';
 import Link from 'next/link';
+import UserMenu from '@/components/UserMenu';
 
 export const metadata = {
   title: 'ducktylo | Senaristler ve Yapımcılar için ortak nokta!',
@@ -19,7 +20,7 @@ export default function RootLayout({
 
         <header className="bg-[#0e5b4a] text-[#ffaa06] py-4 shadow-md">
           <div className="max-w-7xl mx-auto px-4 flex justify-between items-center">
-            {/* Sol üstte ducktylo logosu (ana sayfa linki) */}
+            {/* Sol üstte logo */}
             <Link href="/" className="block h-12 w-auto overflow-visible">
               <img
                 src="/ducktylo-logo.png"
@@ -28,28 +29,33 @@ export default function RootLayout({
               />
             </Link>
 
-            {/* Navigasyon */}
-            <nav className="flex items-center space-x-2 text-sm font-bold">
-              <Link href="/" className="hover:underline ">
-                Ana Sayfa
-              </Link>
-              <span className="text-white">|</span>
-              <Link href="/about" className="hover:underline">
-                Hakkımızda
-              </Link>
-              <span className="text-white">|</span>
-              <Link href="/how-it-works" className="hover:underline">
-                Nasıl Çalışır?
-              </Link>
-              <span className="text-white">|</span>
-              <Link href="/plans" className="hover:underline">
-                Üyelik Planları
-              </Link>
-              <span className="text-white">|</span>
-              <Link href="/contact" className="hover:underline">
-                İletişim
-              </Link>
-            </nav>
+            {/* Navigasyon + Sabit yerleşimli UserMenu */}
+            <div className="flex items-center space-x-4">
+              <nav className="flex items-center space-x-2 text-sm font-bold">
+                <Link href="/" className="hover:underline">
+                  Ana Sayfa
+                </Link>
+                <span className="text-white">|</span>
+                <Link href="/about" className="hover:underline">
+                  Hakkımızda
+                </Link>
+                <span className="text-white">|</span>
+                <Link href="/how-it-works" className="hover:underline">
+                  Nasıl Çalışır?
+                </Link>
+                <span className="text-white">|</span>
+                <Link href="/plans" className="hover:underline">
+                  Üyelik Planları
+                </Link>
+                <span className="text-white">|</span>
+                <Link href="/contact" className="hover:underline">
+                  İletişim
+                </Link>
+              </nav>
+
+              {/* Oturum alanı (sabit genişlik) */}
+              <UserMenu />
+            </div>
           </div>
         </header>
 

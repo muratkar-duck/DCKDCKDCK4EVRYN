@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
 type Script = {
@@ -10,12 +10,15 @@ type Script = {
   genre: string;
   duration: string;
   description: string;
+  user_id: string;
 };
 
 export default function ScriptDetailPage() {
-  const router = useRouter();
   const { id } = useParams();
+  const router = useRouter();
+
   const [script, setScript] = useState<Script | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) fetchScript();
@@ -29,49 +32,43 @@ export default function ScriptDetailPage() {
       .single();
 
     if (error) {
-      console.error('Veri alınamadı:', error.message);
-      return;
+      console.error('❌ Veri alınamadı:', error.message);
+    } else {
+      setScript(data);
     }
-
-    setScript(data);
+    setLoading(false);
   };
 
+  if (loading) {
+    return <p className="text-sm text-gray-500">Yükleniyor...</p>;
+  }
+
   if (!script) {
-    return <p className="text-sm text-gray-500">Senaryo yükleniyor...</p>;
+    return <p className="text-sm text-gray-500">Senaryo bulunamadı.</p>;
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">📄 {script.title}</h1>
+    <div className="space-y-6 max-w-3xl">
+      <h1 className="text-3xl font-bold">{script.title}</h1>
+      <p className="text-[#7a5c36] text-lg">
+        Tür: {script.genre} &middot; Süre: {script.duration}
+      </p>
+      <p className="text-[#4a3d2f] whitespace-pre-line">{script.description}</p>
 
-      <div className="bg-white rounded-xl shadow p-6 border-l-4 border-[#f9c74f] space-y-4">
-        <p>
-          <strong>Tür:</strong> {script.genre}
-        </p>
-        <p>
-          <strong>Süre / Metraj:</strong> {script.duration}
-        </p>
-        <p>
-          <strong>Açıklama:</strong>
-          <br />
-          <span className="text-[#4a3d2f]">{script.description}</span>
-        </p>
-      </div>
-
-      <div className="flex gap-3">
+      <div className="flex gap-2 mt-6">
         <button
-          className="btn btn-secondary"
-          onClick={() => router.push('/dashboard/writer/scripts')}
-        >
-          Geri Dön
-        </button>
-        <button
-          className="btn btn-primary"
+          className="px-4 py-2 bg-[#ffaa06] text-white rounded-lg hover:bg-[#e69900] transition"
           onClick={() =>
             router.push(`/dashboard/writer/scripts/edit/${script.id}`)
           }
         >
-          ✏️ Düzenle
+          Düzenle
+        </button>
+        <button
+          className="px-4 py-2 bg-gray-300 text-black rounded-lg hover:bg-gray-400 transition"
+          onClick={() => router.push('/dashboard/writer/scripts')}
+        >
+          Listeye Dön
         </button>
       </div>
     </div>

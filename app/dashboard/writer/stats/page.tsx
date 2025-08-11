@@ -1,7 +1,7 @@
 import AuthGuard from '@/components/AuthGuard';
 export default function WriterStatsPage() {
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['writer']}>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">📊 İstatistikler</h1>
         <p className="text-[#7a5c36]">

@@ -1,18 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
 export default function EditScriptPage() {
-  const router = useRouter();
   const { id } = useParams();
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
   const [duration, setDuration] = useState('');
   const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (id) fetchScript();
@@ -26,14 +26,13 @@ export default function EditScriptPage() {
       .single();
 
     if (error) {
-      alert('Veri alınamadı: ' + error.message);
+      console.error('❌ Veri alınamadı:', error.message);
     } else if (data) {
       setTitle(data.title);
       setGenre(data.genre);
       setDuration(data.duration);
       setDescription(data.description);
     }
-
     setLoading(false);
   };
 
@@ -53,7 +52,7 @@ export default function EditScriptPage() {
     if (error) {
       alert('Güncelleme başarısız: ' + error.message);
     } else {
-      router.push('/dashboard/writer/scripts');
+      router.push(`/dashboard/writer/scripts/${id}`);
     }
   };
 
@@ -63,7 +62,7 @@ export default function EditScriptPage() {
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">✏️ Senaryo Düzenle</h1>
+      <h1 className="text-2xl font-bold">✏️ Senaryoyu Düzenle</h1>
 
       <form className="space-y-4" onSubmit={handleUpdate}>
         <div>
@@ -123,14 +122,17 @@ export default function EditScriptPage() {
           ></textarea>
         </div>
 
-        <div className="flex gap-4">
-          <button type="submit" className="btn btn-primary">
+        <div className="flex gap-2">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-[#ffaa06] text-white rounded-lg hover:bg-[#e69900] transition"
+          >
             Kaydet
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
-            onClick={() => router.back()}
+            onClick={() => router.push(`/dashboard/writer/scripts/${id}`)}
+            className="px-4 py-2 bg-gray-300 text-black rounded-lg hover:bg-gray-400 transition"
           >
             Vazgeç
           </button>

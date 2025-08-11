@@ -1,7 +1,18 @@
+'use client';
+
 import AuthGuard from '@/components/AuthGuard';
+import { useSession } from '@/hooks/useSession'; // ✅ Bunu ekledik
+import { useEffect } from 'react';
+
 export default function ProducerDashboardPage() {
+  const session = useSession();
+
+  useEffect(() => {
+    console.log('SESSION BİLGİLERİ:', session);
+  }, [session]);
+
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['producer']}>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">Hoş geldiniz, Yapımcı!</h1>
         <p className="text-[#7a5c36]">

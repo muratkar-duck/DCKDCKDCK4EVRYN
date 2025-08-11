@@ -53,7 +53,7 @@ export default function ProducerRequestDetailPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['producer']}>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">
           📥 Gelen Öneriler – Psikolojik Gerilim Dizisi

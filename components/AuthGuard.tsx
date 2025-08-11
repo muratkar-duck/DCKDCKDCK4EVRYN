@@ -2,32 +2,44 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { useSession } from '@/hooks/useSession';
 
-export default function AuthGuard({ children }: { children: React.ReactNode }) {
+type AuthGuardProps = {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+};
+
+export default function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { session, loading } = useSession();
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
+    if (loading) return;
 
-      if (data.session) {
-        setIsAuthenticated(true);
-      } else {
-        router.replace('/auth/sign-in');
-      }
+    if (!session) {
+      setAuthorized(false);
+      router.push('/');
+      return;
+    }
 
-      setLoading(false);
-    };
+    const role = session.user?.user_metadata?.role;
 
-    checkSession();
-  }, [router]);
+    if (allowedRoles && !allowedRoles.includes(role)) {
+      setAuthorized(false);
+      router.push('/');
+    } else {
+      setAuthorized(true);
+    }
+  }, [session, loading, allowedRoles, router]);
 
-  if (loading)
-    return <p className="text-center py-12">Oturum kontrol ediliyor...</p>;
-  if (!isAuthenticated) return null;
+  if (authorized === null || loading) {
+    return <p className="text-center py-10">🔐 Yükleniyor...</p>;
+  }
+
+  if (!authorized) {
+    return <p className="text-center py-10 text-red-600">🚫 Erişiminiz yok.</p>;
+  }
 
   return <>{children}</>;
 }

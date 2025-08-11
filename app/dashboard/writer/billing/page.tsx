@@ -1,7 +1,7 @@
 import AuthGuard from '@/components/AuthGuard';
 export default function WriterBillingPage() {
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['writer']}>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">💳 Üyelik ve Fatura Bilgileri</h1>
         <p className="text-[#7a5c36]">

@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 export default function WriterRequestsPage() {
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['writer']}>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">📢 Açık Yapımcı Talepleri</h1>
         <p className="text-[#7a5c36]">

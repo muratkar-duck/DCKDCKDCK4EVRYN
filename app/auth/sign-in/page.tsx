@@ -26,14 +26,16 @@ export default function SignInPage() {
       setErrorMsg(error.message);
     } else {
       const user = data.user;
-      const role = user?.user_metadata?.role;
+      console.log('Giriş yapan kullanıcı:', user); // 👈 Konsola log ekle
+
+      const role = user?.user_metadata?.role; // 👈 ÖNEMLİ: burada app_metadata yerine user_metadata kullandık
 
       if (role === 'writer') {
         router.push('/dashboard/writer');
       } else if (role === 'producer') {
         router.push('/dashboard/producer');
       } else {
-        router.push('/'); // bilinmeyen rol
+        router.push('/');
       }
     }
 

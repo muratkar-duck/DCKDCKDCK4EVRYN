@@ -25,7 +25,7 @@ export default function WriterSuggestionHistoryPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['writer']}>
       <div className="space-y-6">
         <h1 className="text-2xl font-bold">📤 Gönderdiğim Öneriler</h1>
         <p className="text-[#7a5c36]">

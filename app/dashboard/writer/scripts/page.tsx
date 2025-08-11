@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import { useSession } from '@/hooks/useSession';
 
 type Script = {
   id: string;
@@ -13,16 +14,24 @@ type Script = {
 };
 
 export default function MyScriptsPage() {
+  const { session } = useSession();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    fetchScripts();
-  }, []);
+    if (session?.user?.id) {
+      fetchScripts();
+    }
+  }, [session]);
 
   const fetchScripts = async () => {
-    const { data, error } = await supabase.from('scripts').select('*');
+    const { data, error } = await supabase
+      .from('scripts')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
     if (error) {
       console.error('Veri alınamadı:', error.message);
     } else {
@@ -37,7 +46,12 @@ export default function MyScriptsPage() {
     );
     if (!confirmed) return;
 
-    const { error } = await supabase.from('scripts').delete().eq('id', id);
+    const { error } = await supabase
+      .from('scripts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', session.user.id); // güvenlik kontrolü
+
     if (error) {
       alert('Silme başarısız: ' + error.message);
     } else {

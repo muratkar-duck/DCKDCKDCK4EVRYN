@@ -1,7 +1,7 @@
 import AuthGuard from '@/components/AuthGuard';
 export default function WriterDashboardPage() {
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={['writer']}>
       <div className="space-y-8">
         <h1 className="text-2xl font-bold">Merhaba, Senarist!</h1>
         <p className="text-[#7a5c36]">

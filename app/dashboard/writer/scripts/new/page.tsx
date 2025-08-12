@@ -9,8 +9,8 @@ export default function NewScriptPage() {
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
-  const [duration, setDuration] = useState('');
-  const [description, setDescription] = useState('');
+  const [length, setLength] = useState<number | ''>(''); // dakika
+  const [synopsis, setSynopsis] = useState(''); // açıklama
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,7 +23,6 @@ export default function NewScriptPage() {
         router.push('/auth/sign-in');
         return;
       }
-
       setUserId(user.id);
     };
 
@@ -32,15 +31,14 @@ export default function NewScriptPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!userId) return;
 
     const { error } = await supabase.from('scripts').insert([
       {
         title,
         genre,
-        duration,
-        description,
+        length: length === '' ? null : length,
+        synopsis,
         user_id: userId,
       },
     ]);
@@ -49,12 +47,10 @@ export default function NewScriptPage() {
       alert('❌ Senaryo kaydedilirken hata oluştu: ' + error.message);
     } else {
       alert('✅ Senaryo başarıyla kaydedildi!');
-      // Formu temizle
       setTitle('');
       setGenre('');
-      setDuration('');
-      setDescription('');
-      // Listeye yönlendir
+      setLength('');
+      setSynopsis('');
       router.push('/dashboard/writer/scripts');
     }
   };
@@ -94,20 +90,15 @@ export default function NewScriptPage() {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Süre / Metraj
+            Süre (dakika)
           </label>
-          <select
+          <input
+            type="number"
             className="w-full p-2 border rounded-lg"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
+            value={length}
+            onChange={(e) => setLength(Number(e.target.value))}
             required
-          >
-            <option value="">Seçiniz</option>
-            <option>Kısa Film</option>
-            <option>Uzun Metraj</option>
-            <option>Dizi (Bölüm)</option>
-            <option>Mini Dizi</option>
-          </select>
+          />
         </div>
 
         <div>
@@ -115,8 +106,8 @@ export default function NewScriptPage() {
           <textarea
             className="w-full p-2 border rounded-lg"
             rows={5}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={synopsis}
+            onChange={(e) => setSynopsis(e.target.value)}
             required
           ></textarea>
         </div>

@@ -3,40 +3,62 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-import { useSession } from '@/hooks/useSession';
 
 type Script = {
   id: string;
   title: string;
   genre: string;
-  duration: string;
-  description: string;
+  length?: number;
+  synopsis?: string;
+  user_id?: string;
+  created_at?: string;
 };
 
 export default function MyScriptsPage() {
-  const { session } = useSession();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    if (session?.user?.id) {
-      fetchScripts();
-    }
-  }, [session]);
+    fetchScripts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchScripts = async () => {
+    setLoading(true);
+
+    // Oturumdaki kullanıcıyı al
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
+
+    if (userErr) {
+      console.error('Kullanıcı bilgisi alınamadı:', userErr.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!user) {
+      // Oturum yoksa giriş sayfasına yönlendir
+      router.push('/auth/sign-in');
+      return;
+    }
+
+    // Sadece oturum açmış kullanıcıya ait senaryoları çek
     const { data, error } = await supabase
       .from('scripts')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Veri alınamadı:', error.message);
+      setScripts([]);
     } else {
-      setScripts(data);
+      setScripts(data ?? []);
     }
+
     setLoading(false);
   };
 
@@ -46,11 +68,23 @@ export default function MyScriptsPage() {
     );
     if (!confirmed) return;
 
+    // Tekrar güvenlik için oturumdaki kullanıcıyı al
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
+
+    if (userErr || !user) {
+      alert('Kullanıcı doğrulanamadı. Lütfen tekrar giriş yapın.');
+      return;
+    }
+
+    // Sadece kendi kaydını silmesini sağla
     const { error } = await supabase
       .from('scripts')
       .delete()
       .eq('id', id)
-      .eq('user_id', session.user.id); // güvenlik kontrolü
+      .eq('user_id', user.id);
 
     if (error) {
       alert('Silme başarısız: ' + error.message);
@@ -76,9 +110,9 @@ export default function MyScriptsPage() {
             <div key={s.id} className="card space-y-2">
               <h2 className="text-lg font-semibold">{s.title}</h2>
               <p className="text-sm text-[#7a5c36]">
-                Tür: {s.genre} &middot; Süre: {s.duration}
+                Tür: {s.genre} {s.length ? `· Süre: ${s.length} dk` : ''}
               </p>
-              <p className="text-sm text-[#4a3d2f]">{s.description}</p>
+              <p className="text-sm text-[#4a3d2f]">{s.synopsis ?? ''}</p>
               <div className="flex gap-2 mt-2">
                 <button
                   className="btn btn-secondary"

@@ -10,8 +10,8 @@ export default function EditScriptPage() {
 
   const [title, setTitle] = useState('');
   const [genre, setGenre] = useState('');
-  const [duration, setDuration] = useState('');
-  const [description, setDescription] = useState('');
+  const [length, setLength] = useState<number | ''>(''); // Supabase alanı
+  const [synopsis, setSynopsis] = useState(''); // Supabase alanı
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,8 +30,8 @@ export default function EditScriptPage() {
     } else if (data) {
       setTitle(data.title);
       setGenre(data.genre);
-      setDuration(data.duration);
-      setDescription(data.description);
+      setLength(data.length);
+      setSynopsis(data.synopsis);
     }
     setLoading(false);
   };
@@ -44,8 +44,8 @@ export default function EditScriptPage() {
       .update({
         title,
         genre,
-        duration,
-        description,
+        length: length === '' ? null : length,
+        synopsis,
       })
       .eq('id', id);
 
@@ -56,9 +56,7 @@ export default function EditScriptPage() {
     }
   };
 
-  if (loading) {
-    return <p className="text-sm text-gray-500">Yükleniyor...</p>;
-  }
+  if (loading) return <p className="text-sm text-gray-500">Yükleniyor...</p>;
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -95,20 +93,15 @@ export default function EditScriptPage() {
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Süre / Metraj
+            Süre (dakika)
           </label>
-          <select
+          <input
+            type="number"
             className="w-full p-2 border rounded-lg"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
+            value={length}
+            onChange={(e) => setLength(Number(e.target.value))}
             required
-          >
-            <option value="">Seçiniz</option>
-            <option>Kısa Film</option>
-            <option>Uzun Metraj</option>
-            <option>Dizi (Bölüm)</option>
-            <option>Mini Dizi</option>
-          </select>
+          />
         </div>
 
         <div>
@@ -116,8 +109,8 @@ export default function EditScriptPage() {
           <textarea
             className="w-full p-2 border rounded-lg"
             rows={5}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={synopsis}
+            onChange={(e) => setSynopsis(e.target.value)}
             required
           ></textarea>
         </div>

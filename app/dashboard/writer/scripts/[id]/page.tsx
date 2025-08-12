@@ -8,8 +8,8 @@ type Script = {
   id: string;
   title: string;
   genre: string;
-  duration: string;
-  description: string;
+  length: number; // Supabase alanı
+  synopsis: string; // Supabase alanı
   user_id: string;
 };
 
@@ -39,21 +39,17 @@ export default function ScriptDetailPage() {
     setLoading(false);
   };
 
-  if (loading) {
-    return <p className="text-sm text-gray-500">Yükleniyor...</p>;
-  }
-
-  if (!script) {
+  if (loading) return <p className="text-sm text-gray-500">Yükleniyor...</p>;
+  if (!script)
     return <p className="text-sm text-gray-500">Senaryo bulunamadı.</p>;
-  }
 
   return (
     <div className="space-y-6 max-w-3xl">
       <h1 className="text-3xl font-bold">{script.title}</h1>
       <p className="text-[#7a5c36] text-lg">
-        Tür: {script.genre} &middot; Süre: {script.duration}
+        Tür: {script.genre} &middot; Süre: {script.length} dakika
       </p>
-      <p className="text-[#4a3d2f] whitespace-pre-line">{script.description}</p>
+      <p className="text-[#4a3d2f] whitespace-pre-line">{script.synopsis}</p>
 
       <div className="flex gap-2 mt-6">
         <button

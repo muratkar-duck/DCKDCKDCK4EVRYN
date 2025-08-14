@@ -14,11 +14,11 @@ type Application = {
     genre: string;
     user: {
       username: string;
-    } | null;
-  } | null;
+    };
+  };
   request: {
     title: string;
-  } | null;
+  };
 };
 
 export default function ProducerApplicationsPage() {
@@ -34,14 +34,11 @@ export default function ProducerApplicationsPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) {
-      console.error('Kullanıcı bulunamadı');
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
     setProducerId(user.id);
 
+    // applications tablosundan producer_id'ye göre başvuruları çek
     const { data, error } = await supabase
       .from('applications')
       .select(
@@ -64,9 +61,7 @@ export default function ProducerApplicationsPage() {
 
     if (error) {
       console.error('Başvurular alınamadı:', error.message);
-      setApplications([]);
     } else {
-      console.log('Çekilen başvurular:', data);
       setApplications(data || []);
     }
 
@@ -116,19 +111,17 @@ export default function ProducerApplicationsPage() {
                     <h2 className="text-lg font-semibold">
                       🎬 Senaryo:{' '}
                       <span className="text-[#0e5b4a]">
-                        {app.script?.title || 'Senaryo bilgisi bulunamadı'}
+                        {app.script?.title}
                       </span>
                     </h2>
                     <p className="text-sm text-[#7a5c36]">
-                      Tür: {app.script?.genre || 'Bilinmiyor'} · Süre:{' '}
-                      {app.script?.duration || 'Bilinmiyor'}
+                      Tür: {app.script?.genre} · Süre: {app.script?.duration}
                     </p>
                     <p className="text-sm text-[#7a5c36]">
-                      Senarist:{' '}
-                      {app.script?.user?.username || 'Bilinmeyen Senarist'}
+                      Senarist: {app.script?.user?.username || 'Bilinmiyor'}
                     </p>
                     <p className="text-sm text-[#7a5c36]">
-                      İlan: {app.request?.title || 'Bilinmiyor'}
+                      İlan: {app.request?.title}
                     </p>
                   </div>
                   {getBadge(app.status)}

@@ -1,9 +1,68 @@
 'use client';
+
+import { useEffect, useState } from 'react';
 import AuthGuard from '@/components/AuthGuard';
-import { sentSuggestions } from '@/lib/mock/sentSuggestions';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 
+type Application = {
+  id: string;
+  status: string;
+  created_at: string;
+  requests: {
+    id: string;
+    title: string;
+    producer_name: string;
+  };
+  scripts: {
+    title: string;
+  };
+};
+
 export default function WriterSuggestionHistoryPage() {
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  const fetchApplications = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('applications')
+      .select(
+        `
+        id,
+        status,
+        created_at,
+        requests (
+          id,
+          title,
+          producer_name
+        ),
+        scripts (
+          title
+        )
+      `
+      )
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Başvurular çekilirken hata:', error.message);
+    } else {
+      setApplications(data || []);
+    }
+
+    setLoading(false);
+  };
+
   const getBadge = (status: string) => {
     if (status === 'accepted')
       return (
@@ -24,6 +83,14 @@ export default function WriterSuggestionHistoryPage() {
     );
   };
 
+  if (loading) {
+    return (
+      <AuthGuard allowedRoles={['writer']}>
+        <p className="text-sm text-[#a38d6d]">Yükleniyor...</p>
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard allowedRoles={['writer']}>
       <div className="space-y-6">
@@ -32,46 +99,40 @@ export default function WriterSuggestionHistoryPage() {
           Yapımcılara gönderdiğin önerileri ve durumlarını aşağıda görebilirsin.
         </p>
 
-        {sentSuggestions.map((s) => (
-          <div className="card" key={s.id}>
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h2 className="text-lg font-semibold">{s.scriptTitle}</h2>
-                <p className="text-sm text-[#7a5c36]">
-                  İlan: <strong>{s.targetProject}</strong> <br />
-                  Yapımcı: {s.producer}
-                </p>
+        {applications.length === 0 ? (
+          <p className="text-sm text-[#a38d6d]">
+            Henüz gönderdiğin bir öneri yok.
+          </p>
+        ) : (
+          applications.map((a) => (
+            <div className="card" key={a.id}>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {a.scripts?.title || 'Bilinmeyen Senaryo'}
+                  </h2>
+                  <p className="text-sm text-[#7a5c36]">
+                    İlan: <strong>{a.requests?.title || '-'}</strong> <br />
+                    Yapımcı: {a.requests?.producer_name || '-'}
+                  </p>
+                </div>
+                <div className="text-right space-y-1">
+                  <span className="block text-xs text-[#a38d6d]">
+                    {new Date(a.created_at).toLocaleDateString('tr-TR')}
+                  </span>
+                  {getBadge(a.status)}
+                </div>
               </div>
-              <div className="text-right space-y-1">
-                <span className="block text-xs text-[#a38d6d]">{s.date}</span>
-                {getBadge(s.status)}
-              </div>
-            </div>
 
-            <div className="flex gap-3 pt-3">
-              <Link
-                href={`/dashboard/writer/requests/${slugify(s.targetProject)}`}
-              >
-                <span className="btn btn-secondary">İlana Git</span>
-              </Link>
+              <div className="flex gap-3 pt-3">
+                <Link href={`/dashboard/writer/requests/${a.requests?.id}`}>
+                  <span className="btn btn-secondary">İlana Git</span>
+                </Link>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </AuthGuard>
   );
-}
-
-// Yardımcı: Türkçe karakterleri slug'a çevirir (URL için)
-function slugify(text: string) {
-  return text
-    .toLowerCase()
-    .replace(/ı/g, 'i')
-    .replace(/ş/g, 's')
-    .replace(/ç/g, 'c')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ö/g, 'o')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
 }

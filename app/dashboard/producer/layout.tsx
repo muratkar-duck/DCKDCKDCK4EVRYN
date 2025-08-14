@@ -30,6 +30,12 @@ export default function ProducerDashboardLayout({
             ➕ Talep Oluştur
           </a>
           <a
+            href="/dashboard/producer/my-requests"
+            className="block hover:underline"
+          >
+            📓 Taleplerim
+          </a>
+          <a
             href="/dashboard/producer/applications"
             className="block hover:underline"
           >

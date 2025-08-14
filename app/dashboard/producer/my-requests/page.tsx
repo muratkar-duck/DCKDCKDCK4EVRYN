@@ -71,9 +71,12 @@ export default function ProducerMyRequestsPage() {
                 <h2 className="text-lg font-semibold">{req.title}</h2>
                 <p className="text-sm text-[#7a5c36]">
                   Tür: {req.genre} <br />
-                  Bütçe: ₺{req.budget.toLocaleString('tr-TR')} <br />
+                  Bütçe: ₺{req.budget?.toLocaleString('tr-TR')} <br />
                   Teslim: {new Date(req.deadline).toLocaleDateString('tr-TR')}
                 </p>
+                {req.description && (
+                  <p className="text-sm text-[#4a3d2f]">{req.description}</p>
+                )}
                 <p className="text-sm text-[#4a3d2f]">
                   Gelen Öneri Sayısı: <strong>0</strong>
                 </p>

@@ -1,61 +1,85 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+import AuthGuard from '@/components/AuthGuard';
 
-export default function NewProducerRequestPage() {
+export default function NewRequestPage() {
   const router = useRouter();
 
-  const [form, setForm] = useState({
-    title: '',
-    genre: '',
-    duration: '',
-    description: '',
-    deadline: '',
-    budget: '',
-  });
+  const [title, setTitle] = useState('');
+  const [genre, setGenre] = useState('');
+  const [budget, setBudget] = useState('');
+  const [deadline, setDeadline] = useState('');
+  const [description, setDescription] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-  const handleSubmit = (e: React.FormEvent) => {
+      if (!user) {
+        router.push('/auth/sign-in');
+        return;
+      }
+
+      setUserId(user.id);
+    };
+
+    getUser();
+  }, [router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 🔒 Şimdilik sadece uyarı veriyoruz
-    alert('İlan başarıyla oluşturuldu!');
-    router.push('/dashboard/producer/requests');
+
+    if (!userId) return;
+
+    const { error } = await supabase.from('requests').insert([
+      {
+        title,
+        genre,
+        budget: parseFloat(budget),
+        deadline,
+        description,
+        producer_id: userId,
+      },
+    ]);
+
+    if (error) {
+      alert('❌ İlan eklenirken hata oluştu: ' + error.message);
+    } else {
+      alert('✅ İlan başarıyla yayınlandı!');
+      router.push('/dashboard/producer/my-requests');
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold">📣 Yeni İlan Oluştur</h1>
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 bg-white p-6 rounded-xl shadow-md"
-      >
-        <div>
-          <label className="block text-sm font-semibold mb-1">Başlık</label>
-          <input
-            type="text"
-            name="title"
-            className="w-full border rounded-lg p-2"
-            required
-            onChange={handleChange}
-          />
-        </div>
+    <AuthGuard allowedRoles={['producer']}>
+      <div className="space-y-6 max-w-2xl">
+        <h1 className="text-2xl font-bold">📢 Yeni İlan Yayınla</h1>
 
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">Tür</label>
-            <select
-              name="genre"
-              className="w-full border rounded-lg p-2"
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label className="block text-sm font-medium mb-1">Başlık</label>
+            <input
+              type="text"
+              className="w-full p-2 border rounded-lg"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               required
-              onChange={handleChange}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Tür</label>
+            <select
+              className="w-full p-2 border rounded-lg"
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              required
             >
               <option value="">Seçiniz</option>
               <option>Dram</option>
@@ -66,67 +90,50 @@ export default function NewProducerRequestPage() {
             </select>
           </div>
 
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">Süre</label>
-            <select
-              name="duration"
-              className="w-full border rounded-lg p-2"
+          <div>
+            <label className="block text-sm font-medium mb-1">Bütçe (₺)</label>
+            <input
+              type="number"
+              className="w-full p-2 border rounded-lg"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
               required
-              onChange={handleChange}
-            >
-              <option value="">Seçiniz</option>
-              <option>Kısa Film</option>
-              <option>Uzun Metraj</option>
-              <option>Mini Dizi</option>
-              <option>Dizi</option>
-            </select>
+            />
           </div>
-        </div>
 
-        <div>
-          <label className="block text-sm font-semibold mb-1">Açıklama</label>
-          <textarea
-            name="description"
-            className="w-full border rounded-lg p-2"
-            rows={4}
-            required
-            onChange={handleChange}
-          ></textarea>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">
+          <div>
+            <label className="block text-sm font-medium mb-1">
               Teslim Tarihi
             </label>
             <input
               type="date"
-              name="deadline"
-              className="w-full border rounded-lg p-2"
+              className="w-full p-2 border rounded-lg"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
               required
-              onChange={handleChange}
             />
           </div>
 
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">Bütçe</label>
-            <input
-              type="text"
-              name="budget"
-              placeholder="Örn: 100.000₺"
-              className="w-full border rounded-lg p-2"
+          <div>
+            <label className="block text-sm font-medium mb-1">Açıklama</label>
+            <textarea
+              className="w-full p-2 border rounded-lg"
+              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="İlanınızı detaylı olarak açıklayın..."
               required
-              onChange={handleChange}
             />
           </div>
-        </div>
 
-        <div className="flex justify-end pt-4">
-          <button type="submit" className="btn btn-primary">
+          <button
+            type="submit"
+            className="px-4 py-2 bg-[#ffaa06] text-white rounded-lg hover:bg-[#e69900] transition"
+          >
             Yayınla
           </button>
-        </div>
-      </form>
-    </div>
+        </form>
+      </div>
+    </AuthGuard>
   );
 }

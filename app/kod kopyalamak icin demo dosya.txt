@@ -1,129 +1,122 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import AuthGuard from '@/components/AuthGuard';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function NewScriptPage() {
-  const router = useRouter();
+type Application = {
+  id: string;
+  status: string;
+  created_at: string;
+  scripts: {
+    title: string;
+  } | null;
+  requests: {
+    title: string;
+  } | null;
+  profiles: {
+    full_name: string;
+  } | null;
+};
 
-  const [title, setTitle] = useState('');
-  const [genre, setGenre] = useState('');
-  const [length, setLength] = useState<number | ''>('');
-  const [synopsis, setSynopsis] = useState('');
-  const [userId, setUserId] = useState<string | null>(null);
+export default function ProducerApplicationsPage() {
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    fetchApplications();
+  }, []);
 
-      if (!user) {
-        router.push('/auth/sign-in');
-        return;
-      }
+  const fetchApplications = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
 
-      setUserId(user.id);
-    };
-
-    getUser();
-  }, [router]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!userId) return;
-
-    const { error } = await supabase.from('scripts').insert([
-      {
-        title,
-        genre,
-        length: Number(length),
-        synopsis,
-        user_id: userId,
-      },
-    ]);
+    // Sadece giriş yapan yapımcıya ait ilanlara gelen başvuruları al
+    const { data, error } = await supabase
+      .from('applications')
+      .select(
+        `
+        id,
+        status,
+        created_at,
+        scripts ( title ),
+        requests!inner ( title, producer_id ),
+        profiles:profiles!scripts_user_id_fkey ( full_name )
+      `
+      )
+      .eq('requests.producer_id', user.id)
+      .order('created_at', { ascending: false });
 
     if (error) {
-      alert('❌ Senaryo kaydedilirken hata oluştu: ' + error.message);
+      console.error('Başvurular alınamadı:', error.message);
     } else {
-      alert('✅ Senaryo başarıyla kaydedildi!');
-      setTitle('');
-      setGenre('');
-      setLength('');
-      setSynopsis('');
-      router.push('/dashboard/writer/scripts');
+      setApplications(data || []);
     }
+    setLoading(false);
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <h1 className="text-2xl font-bold">✍️ Yeni Senaryo Ekle</h1>
+    <AuthGuard allowedRoles={['producer']}>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold">📩 Gelen Başvurular</h1>
+        <p className="text-[#7a5c36]">
+          Yayınladığınız ilanlara gelen senaryo başvuruları burada listelenir.
+        </p>
 
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-sm font-medium mb-1">Başlık</label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded-lg"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Tür</label>
-          <select
-            className="w-full p-2 border rounded-lg"
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            required
-          >
-            <option value="">Seçiniz</option>
-            <option>Dram</option>
-            <option>Gerilim</option>
-            <option>Komedi</option>
-            <option>Bilim Kurgu</option>
-            <option>Belgesel</option>
-            <option>Psikolojik Gerilim</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">
-            Süre (dakika)
-          </label>
-          <input
-            type="number"
-            className="w-full p-2 border rounded-lg"
-            value={length}
-            onChange={(e) =>
-              setLength(e.target.value ? Number(e.target.value) : '')
-            }
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Kısa Özet</label>
-          <textarea
-            className="w-full p-2 border rounded-lg"
-            rows={5}
-            value={synopsis}
-            onChange={(e) => setSynopsis(e.target.value)}
-            required
-          ></textarea>
-        </div>
-
-        <button
-          type="submit"
-          className="px-4 py-2 bg-[#ffaa06] text-white rounded-lg hover:bg-[#e69900] transition"
-        >
-          Kaydet
-        </button>
-      </form>
-    </div>
+        {loading ? (
+          <p className="text-sm text-[#a38d6d]">Yükleniyor...</p>
+        ) : applications.length === 0 ? (
+          <p className="text-sm text-[#a38d6d]">
+            Henüz ilanlarınıza gelen bir başvuru yok.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {applications.map((app) => (
+              <div key={app.id} className="card">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h2 className="text-lg font-semibold">
+                      🎬 Senaryo:{' '}
+                      <span className="text-[#0e5b4a]">
+                        {app.scripts?.title || 'Bilinmiyor'}
+                      </span>
+                    </h2>
+                    <p className="text-sm text-[#7a5c36]">
+                      Senarist: {app.profiles?.full_name || 'Bilinmiyor'}
+                    </p>
+                    <p className="text-sm text-[#7a5c36]">
+                      İlan: {app.requests?.title || 'Bilinmiyor'}
+                    </p>
+                  </div>
+                  <span
+                    className={`text-xs ${
+                      app.status === 'pending'
+                        ? 'text-yellow-600'
+                        : app.status === 'accepted'
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}
+                  >
+                    Statü:{' '}
+                    {app.status === 'pending'
+                      ? 'Beklemede'
+                      : app.status === 'accepted'
+                      ? 'Kabul Edildi'
+                      : app.status === 'rejected'
+                      ? 'Reddedildi'
+                      : app.status}
+                  </span>
+                </div>
+                <div className="mt-3">
+                  <button className="btn btn-secondary">Mesajı Gör</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </AuthGuard>
   );
 }

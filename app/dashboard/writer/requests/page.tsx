@@ -1,9 +1,115 @@
 'use client';
-import AuthGuard from '@/components/AuthGuard';
 
+import { useEffect, useState } from 'react';
+import AuthGuard from '@/components/AuthGuard';
+import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+type Request = {
+  id: string;
+  title: string;
+  genre: string;
+  duration: string;
+  deadline: string;
+  description: string;
+  producer_name: string;
+  producer_id: string;
+};
+
+type Script = {
+  id: string;
+  title: string;
+  genre: string;
+  duration: string;
+};
 
 export default function WriterRequestsPage() {
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [scripts, setScripts] = useState<Script[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    setUserId(user.id);
+
+    // Talepleri çek
+    const { data: reqData } = await supabase
+      .from('requests')
+      .select('*')
+      .order('deadline', { ascending: false });
+
+    // Kullanıcının senaryolarını çek
+    const { data: scrData } = await supabase
+      .from('scripts')
+      .select('*')
+      .eq('user_id', user.id);
+
+    setRequests(reqData || []);
+    setScripts(scrData || []);
+    setLoading(false);
+  };
+
+  const openApplyModal = (request: Request) => {
+    setSelectedRequest(request);
+    setSelectedScriptId(null);
+  };
+
+  const handleApply = async () => {
+    if (!selectedRequest || !selectedScriptId || !userId) return;
+
+    // İlan sahibinin (producer) id'sini çek
+    const { data: reqDetails } = await supabase
+      .from('requests')
+      .select('producer_id')
+      .eq('id', selectedRequest.id)
+      .single();
+
+    if (!reqDetails) {
+      alert('❌ İlan bilgisi bulunamadı.');
+      return;
+    }
+
+    const { error } = await supabase.from('applications').insert([
+      {
+        request_id: selectedRequest.id,
+        script_id: selectedScriptId,
+        user_id: userId, // başvuran senarist
+        producer_id: reqDetails.producer_id, // hedef yapımcı
+        status: 'pending',
+      },
+    ]);
+
+    if (error) {
+      alert('❌ Başvuru başarısız: ' + error.message);
+    } else {
+      alert('✅ Başvurunuz gönderildi!');
+      setSelectedRequest(null);
+      setSelectedScriptId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <AuthGuard allowedRoles={['writer']}>
+        <p className="text-sm text-[#a38d6d]">Yükleniyor...</p>
+      </AuthGuard>
+    );
+  }
+
   return (
     <AuthGuard allowedRoles={['writer']}>
       <div className="space-y-6">
@@ -13,55 +119,105 @@ export default function WriterRequestsPage() {
           olduğunu düşündüğün projelere senaryonu önerebilirsin.
         </p>
 
-        {/* Talepler Listesi */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Talep 1 */}
-          <div className="card space-y-2">
-            <h2 className="text-lg font-semibold">Psikolojik Gerilim Dizisi</h2>
-            <p className="text-sm text-[#7a5c36]">Yapımcı: FilmHouse</p>
-            <p className="text-sm text-[#7a5c36]">Tür: Gerilim / Psikolojik</p>
-            <p className="text-sm text-[#7a5c36]">Süre: Mini Dizi (8 bölüm)</p>
-            <p className="text-sm text-[#7a5c36]">
-              Teslim Tarihi: 30 Ağustos 2025
-            </p>
-            <p className="text-sm text-[#4a3d2f]">
-              Katmanlı karakterlerle ilerleyen, düşük diyaloglu bir hikâye
-              isteniyor.
-            </p>
-            <div className="flex gap-2 mt-2">
-              <Link
-                href="/dashboard/writer/requests/psikolojik-gerilim"
-                className="btn btn-secondary"
-              >
-                Detaylar
-              </Link>
+          {requests.map((req) => (
+            <div key={req.id} className="card space-y-2">
+              <h2 className="text-lg font-semibold">{req.title}</h2>
+              <p className="text-sm text-[#7a5c36]">
+                Yapımcı: {req.producer_name}
+              </p>
+              <p className="text-sm text-[#7a5c36]">Tür: {req.genre}</p>
+              <p className="text-sm text-[#7a5c36]">Süre: {req.duration}</p>
+              <p className="text-sm text-[#7a5c36]">
+                Teslim Tarihi:{' '}
+                {new Date(req.deadline).toLocaleDateString('tr-TR')}
+              </p>
+              <p className="text-sm text-[#4a3d2f]">{req.description}</p>
+              <div className="flex gap-2 mt-2">
+                <Link
+                  href={`/dashboard/writer/requests/${req.id}`}
+                  className="btn btn-secondary"
+                >
+                  Detaylar
+                </Link>
+                <button
+                  onClick={() => openApplyModal(req)}
+                  className="btn btn-primary"
+                >
+                  Başvur
+                </button>
+              </div>
             </div>
-          </div>
-
-          {/* Talep 2 */}
-          <div className="card space-y-2">
-            <h2 className="text-lg font-semibold">Kentsel Dram Film Projesi</h2>
-            <p className="text-sm text-[#7a5c36]">Yapımcı: Studio X</p>
-            <p className="text-sm text-[#7a5c36]">Tür: Dram</p>
-            <p className="text-sm text-[#7a5c36]">Süre: Uzun Metraj</p>
-            <p className="text-sm text-[#7a5c36]">
-              Teslim Tarihi: 15 Eylül 2025
-            </p>
-            <p className="text-sm text-[#4a3d2f]">
-              İstanbul'da geçen sosyal temalı güçlü diyaloglara sahip bir
-              senaryo isteniyor.
-            </p>
-            <div className="flex gap-2 mt-2">
-              <Link
-                href="/dashboard/writer/requests/kentsel-dram"
-                className="btn btn-secondary"
-              >
-                Detaylar
-              </Link>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* Başvuru Modalı */}
+      {selectedRequest && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full space-y-4">
+            <h2 className="text-xl font-bold">
+              📤 {selectedRequest.title} için Başvuru
+            </h2>
+
+            {scripts.filter((s) => s.genre === selectedRequest.genre).length >
+            0 ? (
+              <>
+                <p className="text-sm text-gray-600">
+                  Lütfen göndermek istediğiniz senaryoyu seçin:
+                </p>
+                <select
+                  className="w-full p-2 border rounded-lg"
+                  value={selectedScriptId || ''}
+                  onChange={(e) => setSelectedScriptId(e.target.value)}
+                >
+                  <option value="">Seçiniz</option>
+                  {scripts
+                    .filter((s) => s.genre === selectedRequest.genre)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.title} ({s.duration})
+                      </option>
+                    ))}
+                </select>
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => setSelectedRequest(null)}
+                    className="btn btn-secondary"
+                  >
+                    Vazgeç
+                  </button>
+                  <button
+                    onClick={handleApply}
+                    className="btn btn-primary"
+                    disabled={!selectedScriptId}
+                  >
+                    Gönder
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-red-600">
+                  ❌ Uygun türde bir senaryonuz yok.
+                </p>
+                <button
+                  onClick={() => router.push('/dashboard/writer/scripts/new')}
+                  className="btn btn-primary w-full"
+                >
+                  ➕ Yeni Senaryo Ekle
+                </button>
+                <button
+                  onClick={() => setSelectedRequest(null)}
+                  className="btn btn-secondary w-full"
+                >
+                  Vazgeç
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </AuthGuard>
   );
 }

@@ -4,27 +4,21 @@ import { useEffect, useState } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import { supabase } from '@/lib/supabaseClient';
 
-type Application = {
-  id: string;
+type ApplicationRow = {
+  application_id: string;
   status: string;
   created_at: string;
-  script: {
-    title: string;
-    duration: string;
-    genre: string;
-    user: {
-      username: string;
-    };
-  };
-  request: {
-    title: string;
-  };
+  request_id: string;
+  request_title: string;
+  script_id: string;
+  script_title: string;
+  script_genre: string;
+  script_length: string | null;
 };
 
 export default function ProducerApplicationsPage() {
-  const [applications, setApplications] = useState<Application[]>([]);
+  const [applications, setApplications] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [producerId, setProducerId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -34,38 +28,43 @@ export default function ProducerApplicationsPage() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return;
 
-    setProducerId(user.id);
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-    // applications tablosundan producer_id'ye göre başvuruları çek
-    const { data, error } = await supabase
-      .from('applications')
-      .select(
-        `
-        id,
-        status,
-        created_at,
-        script:scripts (
-          title,
-          duration,
-          genre,
-          user:users ( username )
-        ),
-        request:requests ( title ),
-        producer_id
-      `
-      )
-      .eq('producer_id', user.id)
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase.rpc('get_producer_applications', {
+      p_producer_id: user.id,
+    });
 
     if (error) {
       console.error('Başvurular alınamadı:', error.message);
+      setApplications([]);
     } else {
-      setApplications(data || []);
+      setApplications((data as ApplicationRow[]) || []);
     }
 
     setLoading(false);
+  };
+
+  const handleDecision = async (
+    applicationId: string,
+    decision: 'accepted' | 'rejected'
+  ) => {
+    const { error } = await supabase
+      .from('applications')
+      .update({ status: decision })
+      .eq('id', applicationId);
+
+    if (error) {
+      alert('❌ Güncelleme hatası: ' + error.message);
+    } else {
+      alert(
+        `✅ Başvuru ${decision === 'accepted' ? 'kabul edildi' : 'reddedildi'}`
+      );
+      fetchApplications(); // Listeyi yenile
+    }
   };
 
   const getBadge = (status: string) => {
@@ -105,28 +104,51 @@ export default function ProducerApplicationsPage() {
         ) : (
           <div className="space-y-4">
             {applications.map((app) => (
-              <div key={app.id} className="card">
+              <div key={app.application_id} className="card">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h2 className="text-lg font-semibold">
                       🎬 Senaryo:{' '}
-                      <span className="text-[#0e5b4a]">
-                        {app.script?.title}
-                      </span>
+                      <span className="text-[#0e5b4a]">{app.script_title}</span>
                     </h2>
                     <p className="text-sm text-[#7a5c36]">
-                      Tür: {app.script?.genre} · Süre: {app.script?.duration}
+                      Tür: {app.script_genre} · Süre:{' '}
+                      {app.script_length ? app.script_length : '—'}
                     </p>
                     <p className="text-sm text-[#7a5c36]">
-                      Senarist: {app.script?.user?.username || 'Bilinmiyor'}
+                      İlan: {app.request_title}
                     </p>
-                    <p className="text-sm text-[#7a5c36]">
-                      İlan: {app.request?.title}
+                    <p className="text-xs text-[#a38d6d]">
+                      Başvuru:{' '}
+                      {new Date(app.created_at).toLocaleString('tr-TR')}
                     </p>
                   </div>
                   {getBadge(app.status)}
                 </div>
 
+                {/* ✅ Pending başvurular için karar butonları */}
+                {app.status === 'pending' && (
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() =>
+                        handleDecision(app.application_id, 'accepted')
+                      }
+                      className="btn btn-primary"
+                    >
+                      ✅ Kabul Et
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleDecision(app.application_id, 'rejected')
+                      }
+                      className="btn btn-secondary"
+                    >
+                      ❌ Reddet
+                    </button>
+                  </div>
+                )}
+
+                {/* Sabit butonlar */}
                 <div className="mt-3 flex gap-2">
                   <button className="btn btn-secondary">Mesaj Gönder</button>
                   <button className="btn btn-primary">Detayları Gör</button>

@@ -10,7 +10,7 @@ type Request = {
   id: string;
   title: string;
   genre: string;
-  duration: string;
+  length: string; // ✅ duration yerine length
   deadline: string;
   description: string;
   producer_name: string;
@@ -21,7 +21,7 @@ type Script = {
   id: string;
   title: string;
   genre: string;
-  duration: string;
+  length: string; // ✅ duration yerine length
 };
 
 export default function WriterRequestsPage() {
@@ -87,8 +87,8 @@ export default function WriterRequestsPage() {
       {
         request_id: selectedRequest.id,
         script_id: selectedScriptId,
-        user_id: userId, // başvuran senarist
-        producer_id: reqDetails.producer_id, // hedef yapımcı
+        user_id: userId,
+        producer_id: reqDetails.producer_id,
         status: 'pending',
       },
     ]);
@@ -127,7 +127,7 @@ export default function WriterRequestsPage() {
                 Yapımcı: {req.producer_name}
               </p>
               <p className="text-sm text-[#7a5c36]">Tür: {req.genre}</p>
-              <p className="text-sm text-[#7a5c36]">Süre: {req.duration}</p>
+              <p className="text-sm text-[#7a5c36]">Süre: {req.length}</p>
               <p className="text-sm text-[#7a5c36]">
                 Teslim Tarihi:{' '}
                 {new Date(req.deadline).toLocaleDateString('tr-TR')}
@@ -176,7 +176,7 @@ export default function WriterRequestsPage() {
                     .filter((s) => s.genre === selectedRequest.genre)
                     .map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.title} ({s.duration})
+                        {s.title} ({s.length})
                       </option>
                     ))}
                 </select>

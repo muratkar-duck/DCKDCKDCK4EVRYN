@@ -8,8 +8,9 @@ type Script = {
   id: string;
   title: string;
   genre: string;
-  duration: string;
-  description: string;
+  length: number | null;
+  synopsis: string | null;
+  created_at: string;
 };
 
 export default function BrowseScriptsPage() {
@@ -21,12 +22,15 @@ export default function BrowseScriptsPage() {
   }, []);
 
   const fetchScripts = async () => {
-    const { data, error } = await supabase.from('scripts').select('*');
+    const { data, error } = await supabase.rpc('browse_scripts');
+
     if (error) {
       console.error('Veri alınamadı:', error.message);
+      setScripts([]);
     } else {
-      setScripts(data);
+      setScripts((data as Script[]) || []);
     }
+
     setLoading(false);
   };
 
@@ -46,12 +50,14 @@ export default function BrowseScriptsPage() {
           <option>Komedi</option>
           <option>Gerilim</option>
           <option>Bilim Kurgu</option>
+          <option>Belgesel</option>
         </select>
         <select className="p-2 border rounded-lg">
           <option>Süre</option>
           <option>Kısa Film</option>
           <option>Uzun Metraj</option>
           <option>Dizi</option>
+          <option>Mini Dizi</option>
         </select>
         <select className="p-2 border rounded-lg">
           <option>Sıralama</option>
@@ -71,9 +77,11 @@ export default function BrowseScriptsPage() {
             <div className="card space-y-2" key={s.id}>
               <h2 className="text-lg font-semibold">{s.title}</h2>
               <p className="text-sm text-[#7a5c36]">
-                Tür: {s.genre} &middot; Süre: {s.duration}
+                Tür: {s.genre} &middot; Süre: {s.length ?? '-'} dk
               </p>
-              <p className="text-sm text-[#4a3d2f]">{s.description}</p>
+              <p className="text-sm text-[#4a3d2f]">
+                {s.synopsis || 'Açıklama bulunmuyor.'}
+              </p>
               <div className="flex gap-2 mt-2">
                 <button className="btn btn-primary">İlgilen</button>
                 <Link
